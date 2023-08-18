@@ -1,0 +1,24 @@
+---
+- name: Install if Apache2 is not installed
+  hosts: aws-servers
+  become: true
+  tasks:
+    - name: Check if Apache package is installed
+      ansible.builtin.package_facts: null
+      register: package_facts
+    - name: Display Apache package status
+      debug:
+        msg: Apache is {{ 'installed' if 'httpd' in
+          package_facts.ansible_facts.packages.keys() else 'not installed' }}
+      when: "'apache2' in package_facts.ansible_facts.packages"
+    - name: Install Apache2
+      ansible.builtin.package:
+        name: apache2
+        state: present
+      when: "'apache2' is not in package_facts.ansible_facts.packages"
+    - name: Start Apache2 service
+      ansible.builtin.service:
+        name: apache2
+        state: started
+        enabled: yes
+      when: "'apache2' is not in package_facts.ansible_facts.packages"
